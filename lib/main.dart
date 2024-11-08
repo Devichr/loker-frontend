@@ -155,7 +155,7 @@ class _LokerListSectionState extends State<LokerListSection> {
 
   // Fungsi untuk menghubungkan ke WebSocket
   void connectSocket() {
-    socket = IO.io('http://yourlock.vercel.app', <String, dynamic>{
+    socket = IO.io('wss:http://yourlock.vercel.app', <String, dynamic>{
       'transports': ['websocket'],
     });
 
