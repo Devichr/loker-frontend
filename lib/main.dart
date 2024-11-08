@@ -127,29 +127,30 @@ class _LokerListSectionState extends State<LokerListSection> {
   }
 
   Future<void> fetchLokers() async {
-  try {
-    final response = await http.get(Uri.parse('https://yourlock.vercel.app/api/lokers'));
-    
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+    try {
+      final response = await http.get(Uri.parse('https://yourlock.vercel.app/api/lokers'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          lokers = data.map((json) => Loker.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        print('Failed to load data. Status code: ${response.statusCode}');
+        setState(() {
+          isLoading = false;
+          hasError = true;
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
       setState(() {
-        lokers = data.map((json) => Loker.fromJson(json)).toList();
         isLoading = false;
-      });
-    } else {
-      print('Failed to load data. Status code: ${response.statusCode}');
-      setState(() {
-        isLoading = false;
+        hasError = true;
       });
     }
-  } catch (e) {
-    print('Error fetching data: $e');
-    setState(() {
-      isLoading = false;
-    });
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +190,9 @@ class _LokerListSectionState extends State<LokerListSection> {
                           ),
                           const SizedBox(height: 16.0),
                           ...lokers.map((loker) => LokerItem(
-                                icon: Icons.lock,
+                                icon: loker.status == "Occupied"
+                                    ? Icons.lock
+                                    : Icons.lock_open,
                                 name: loker.lokerId,
                                 status: loker.status,
                               )),
