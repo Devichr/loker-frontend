@@ -1,9 +1,8 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:socket_io_client/socket_io_client.dart' as IO;  // Tambahkan import untuk socket_io_client
 
 void main() {
   runApp(const MyApp());
@@ -119,11 +118,13 @@ class _LokerListSectionState extends State<LokerListSection> {
   List<Loker> lokers = [];
   bool isLoading = true;
   bool hasError = false;
+  late IO.Socket socket;  // Deklarasikan Socket.io
 
   @override
   void initState() {
     super.initState();
     fetchLokers();
+    connectSocket();  // Hubungkan ke Socket.io saat inisialisasi
   }
 
   Future<void> fetchLokers() async {
@@ -150,6 +151,31 @@ class _LokerListSectionState extends State<LokerListSection> {
         hasError = true;
       });
     }
+  }
+
+  // Fungsi untuk menghubungkan ke WebSocket
+  void connectSocket() {
+    socket = IO.io('http://localhost:3000', <String, dynamic>{
+      'transports': ['websocket'],
+    });
+
+    socket.on('loker-status-changed', (data) {
+      setState(() {
+        final updatedLoker = Loker.fromJson(data);
+        final index = lokers.indexWhere((loker) => loker.lokerId == updatedLoker.lokerId);
+        if (index != -1) {
+          lokers[index] = updatedLoker;
+        } else {
+          lokers.add(updatedLoker);  // Jika loker baru, tambahkan ke list
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    socket.dispose();  // Pastikan untuk menutup koneksi WebSocket saat widget dibuang
+    super.dispose();
   }
 
   @override
